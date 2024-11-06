@@ -112,7 +112,7 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
         # print(net)
-        net.to(gpu_ids[0])
+        # net.to(gpu_ids[0])
         net = torch.nn.DataParallel(net, gpu_ids)  # multi-GPUs
     init_weights(net, init_type, init_gain=init_gain)
     return net
@@ -489,8 +489,8 @@ class ResnetGenerator_our(nn.Module):
         attention9_ = attention[:, 8:9, :, :]
         attention10_ = attention[:, 9:10, :, :]
 
-        attention1 = attention1_.repeat(1, 3, 1, 1) [1, 3, 256, 256]
-        # print(attention1.size()) 将通道数扩到3 大小变成
+        attention1 = attention1_.repeat(1, 3, 1, 1) 
+        # print(attention1.size()) 将通道数扩到3 大小变成[1, 3, 256, 256]
         attention2 = attention2_.repeat(1, 3, 1, 1)
         attention3 = attention3_.repeat(1, 3, 1, 1)
         attention4 = attention4_.repeat(1, 3, 1, 1)
