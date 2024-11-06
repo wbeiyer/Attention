@@ -38,7 +38,6 @@ if __name__ == '__main__':
   # 创建一个DataFrame来存储损失信息
     loss_df1 = pd.DataFrame(columns=['Epoch', 'Iteration', 'Loss_Name', 'Loss_Value'])
     for epoch in range(opt.epoch_count, opt.niter + opt.niter_decay + 1):    # outer loop for different epochs; we save the model by <epoch_count>, <epoch_count>+<save_latest_freq>
-        epoch_iter = 0                  # the number of training iterations in current epoch, reset to 0 every epoch
 
         if epoch % opt.save_epoch_freq == 0 or epoch == opt.niter + opt.niter_decay: 
             # 初始化一个空的累加字典
@@ -48,7 +47,6 @@ if __name__ == '__main__':
 
         for i, data in enumerate(dataset):  # inner loop within one epoch
             total_iters += opt.batch_size
-            epoch_iter += opt.batch_size
             model.set_input(data)         # unpack data from dataset and apply preprocessing
             model.optimize_parameters()   # calculate loss functions, get gradients, update network weights
 
@@ -68,7 +66,7 @@ if __name__ == '__main__':
                 new_row = {'Epoch': epoch, 'Iteration': total_iters, 'Loss_Name': name, 'Loss_Value': loss_value}
                 loss_df1 = pd.concat([loss_df1, pd.DataFrame(new_row, index=[0])], ignore_index=True)
 
-        print('End of epoch %d / %d \t Time Taken: %d sec' % (epoch, opt.niter + opt.niter_decay))
+        print('End of epoch %d / %d \t ' % (epoch, opt.niter + opt.niter_decay))
         model.update_learning_rate()                     # update learning rates at the end of every epoch.
     training_loss_file = 'training_losses.xlsx'
     loss_df1.to_excel(training_loss_file, index=False)

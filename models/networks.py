@@ -437,6 +437,7 @@ class ResnetGenerator_our(nn.Module):
 
     # forward method
     def forward(self, input):
+        # 反射填充 256*256*3 --> 262*262*3
         x = F.pad(input, (3, 3, 3, 3), 'reflect')
         x = F.relu(self.conv1_norm(self.conv1(x)))
         x = F.relu(self.conv2_norm(self.conv2(x)))
@@ -473,10 +474,10 @@ class ResnetGenerator_our(nn.Module):
         # x_attention = F.pad(x_attention, (3, 3, 3, 3), 'reflect')
         # print(x_attention.size()) [1, 64, 256, 256]
         attention = self.deconv3_attention(x_attention)
-
+        # 1*10*256*256 10个通道的数值求softmax 加起来的值是1
         softmax_ = torch.nn.Softmax(dim=1)
         attention = softmax_(attention)
-
+        # attention1的维度 [1, 1, 256, 256]
         attention1_ = attention[:, 0:1, :, :]
         attention2_ = attention[:, 1:2, :, :]
         attention3_ = attention[:, 2:3, :, :]
@@ -488,8 +489,8 @@ class ResnetGenerator_our(nn.Module):
         attention9_ = attention[:, 8:9, :, :]
         attention10_ = attention[:, 9:10, :, :]
 
-        attention1 = attention1_.repeat(1, 3, 1, 1)
-        # print(attention1.size())
+        attention1 = attention1_.repeat(1, 3, 1, 1) [1, 3, 256, 256]
+        # print(attention1.size()) 将通道数扩到3 大小变成
         attention2 = attention2_.repeat(1, 3, 1, 1)
         attention3 = attention3_.repeat(1, 3, 1, 1)
         attention4 = attention4_.repeat(1, 3, 1, 1)
