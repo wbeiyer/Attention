@@ -510,7 +510,7 @@ class ResnetGenerator_our(nn.Module):
         output7 = image7 * attention7
         output8 = image8 * attention8
         output9 = image9 * attention9
-        # output10 = image10 * attention10
+        # output10 = image10 * attention10 为了保留颜色
         output10 = input * attention10
 
         o=output1 + output2 + output3 + output4 + output5 + output6 + output7 + output8 + output9 + output10

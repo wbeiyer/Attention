@@ -201,6 +201,18 @@ class BaseModel(ABC):
                 for key in list(state_dict.keys()):  # need to copy keys here because we mutate in loop
                     self.__patch_instance_norm_state_dict(state_dict, net, key.split('.'))
                 net.load_state_dict(state_dict)
+                
+                # 打印所有参数的名称及其对应的维度
+                # print(f"Parameters for {name}:")
+                # for param_name, param_value in state_dict.items():
+                #     print(f"{param_name}: {param_value.shape}")
+
+                # # 打印 deconv3_attention.weight 这个参数的维度
+                # if 'deconv3_attention.weight' in state_dict:
+                #     weight_tensor = state_dict['deconv3_attention.weight']
+                #     print(f"deconv3_attention.weight shape: {weight_tensor.shape}")
+                # else:
+                #     print("deconv3_attention.weight not found in the state_dict.")
 
     def print_networks(self, verbose):
         """Print the total number of parameters in the network and (if verbose) network architecture
