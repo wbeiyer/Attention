@@ -20,13 +20,13 @@ class AttentionGANModel(BaseModel):
         # specify the training losses you want to print out. The training/test scripts will call <BaseModel.get_current_losses>
         self.loss_names = ['D', 'G', 'idt','color']
         # specify the images you want to save/display. The training/test scripts will call <BaseModel.get_current_visuals>
-        visual_names = ['real', 'fake','et','ec', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9', 'o10',
+        visual_names = ['real_A', 'fake_B','et','ec', 'o1', 'o2', 'o3', 'o4', 'o5', 'o6', 'o7', 'o8', 'o9', 'o10',
         'a1', 'a2', 'a3', 'a4', 'a5', 'a6', 'a7', 'a8', 'a9', 'a10', 'i1', 'i2', 'i3', 'i4', 'i5', 'i6', 'i7', 'i8', 'i9']
         if self.isTrain and self.opt.lambda_identity > 0.0:  # if identity loss is used, we also visualize idt_B=G_B(A) ad idt_A=G_A(B)
             visual_names.append('idt')
 
         if self.opt.saveDisk:
-            self.visual_names = ['real', 'fake', 'ec', 'et']
+            self.visual_names = ['real_A', 'fake_B', 'ec', 'et']
         else:
             self.visual_names = visual_names  # combine visualizations for A and B
         # specify the models you want to save to the disk. The training/test scripts will call <BaseModel.save_networks> and <BaseModel.load_networks>.
@@ -73,7 +73,7 @@ class AttentionGANModel(BaseModel):
 
     def forward(self):
         """Run forward pass; called by both functions <optimize_parameters> and <test>."""
-        self.fake,self.et,self.ec, self.o1, self.o2, self.o3, self.o4, self.o5, self.o6, self.o7, self.o8, self.o9, self.o10, \
+        self.fake_B,self.et,self.ec, self.o1, self.o2, self.o3, self.o4, self.o5, self.o6, self.o7, self.o8, self.o9, self.o10, \
         self.a1, self.a2, self.a3, self.a4, self.a5, self.a6, self.a7, self.a8, self.a9, self.a10, \
         self.i1, self.i2, self.i3, self.i4, self.i5, self.i6, self.i7, self.i8, self.i9 = self.netG(self.real_A)  # G_A(A)
 
