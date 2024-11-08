@@ -457,6 +457,7 @@ class ResnetGenerator_our(nn.Module):
         x_content = F.pad(x_content, (3, 3, 3, 3), 'reflect')
         content = self.deconv3_content(x_content)
         image = self.tanh(content)
+        # 1-7纹理内容
         image1 = image[:, 0:3, :, :]
         # print(image1.size()) # [1, 3, 256, 256]
         image2 = image[:, 3:6, :, :]
@@ -465,6 +466,7 @@ class ResnetGenerator_our(nn.Module):
         image5 = image[:, 12:15, :, :]
         image6 = image[:, 15:18, :, :]
         image7 = image[:, 18:21, :, :]
+        #8-9 色彩内容
         image8 = image[:, 21:24, :, :]
         image9 = image[:, 24:27, :, :]
         # image10 = image[:, 27:30, :, :]
@@ -478,6 +480,7 @@ class ResnetGenerator_our(nn.Module):
         softmax_ = torch.nn.Softmax(dim=1)
         attention = softmax_(attention)
         # attention1的维度 [1, 1, 256, 256]
+        # 1-7纹理注意力
         attention1_ = attention[:, 0:1, :, :]
         attention2_ = attention[:, 1:2, :, :]
         attention3_ = attention[:, 2:3, :, :]
@@ -485,18 +488,22 @@ class ResnetGenerator_our(nn.Module):
         attention5_ = attention[:, 4:5, :, :]
         attention6_ = attention[:, 5:6, :, :]
         attention7_ = attention[:, 6:7, :, :]
+        # 8-9色彩注意力
         attention8_ = attention[:, 7:8, :, :]
         attention9_ = attention[:, 8:9, :, :]
+        # 原图的注意力
         attention10_ = attention[:, 9:10, :, :]
 
-        attention1 = attention1_.repeat(1, 3, 1, 1) 
         # print(attention1.size()) 将通道数扩到3 大小变成[1, 3, 256, 256]
+        # 1-7 纹理图权重
+        attention1 = attention1_.repeat(1, 3, 1, 1) 
         attention2 = attention2_.repeat(1, 3, 1, 1)
         attention3 = attention3_.repeat(1, 3, 1, 1)
         attention4 = attention4_.repeat(1, 3, 1, 1)
         attention5 = attention5_.repeat(1, 3, 1, 1)
         attention6 = attention6_.repeat(1, 3, 1, 1)
         attention7 = attention7_.repeat(1, 3, 1, 1)
+        # 8-10 色彩图权重
         attention8 = attention8_.repeat(1, 3, 1, 1)
         attention9 = attention9_.repeat(1, 3, 1, 1)
         attention10 = attention10_.repeat(1, 3, 1, 1)
@@ -513,9 +520,11 @@ class ResnetGenerator_our(nn.Module):
         # output10 = image10 * attention10 为了保留颜色
         output10 = input * attention10
 
-        o=output1 + output2 + output3 + output4 + output5 + output6 + output7 + output8 + output9 + output10
+        et=output1 + output2 + output3 + output4 + output5 + output6 + output7
+        ec=output8 + output9 + output10
+        o=et+ec
 
-        return o, output1, output2, output3, output4, output5, output6, output7, output8, output9, output10, attention1,attention2,attention3, attention4, attention5, attention6, attention7, attention8,attention9,attention10, image1, image2,image3,image4,image5,image6,image7,image8,image9
+        return o,et,ec, output1, output2, output3, output4, output5, output6, output7, output8, output9, output10, attention1,attention2,attention3, attention4, attention5, attention6, attention7, attention8,attention9,attention10, image1, image2,image3,image4,image5,image6,image7,image8,image9
 
 # resnet block with reflect padding
 class resnet_block(nn.Module):

@@ -195,3 +195,32 @@ End of epoch 42 / 200
 learning rate = 0.0002000
 End of epoch 43 / 200 	 
 learning rate = 0.0002000
+End of epoch 44 / 200 	 
+learning rate = 0.0002000
+End of epoch 45 / 200 	 
+learning rate = 0.0002000
+End of epoch 46 / 200 	 
+learning rate = 0.0002000
+End of epoch 47 / 200 	 
+learning rate = 0.0002000
+End of epoch 48 / 200 	 
+learning rate = 0.0002000
+End of epoch 49 / 200 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 50, iters 811200
+D_A: 0.014339493012424978
+G_A: 0.02850045809174173
+cycle_A: 0.007036576223124211
+idt_A: 0.00011581127870199504
+D_B: 0.002025922577062055
+G_B: 0.05865365361218034
+cycle_B: 0.002161673318202309
+idt_B: 0.0002998630733129766
+End of epoch 50 / 200 	 
+learning rate = 0.0002000
+End of epoch 51 / 200 	 
+learning rate = 0.0002000
+End of epoch 52 / 200 	 
+learning rate = 0.0002000
+End of epoch 53 / 200 	 
+learning rate = 0.0002000
