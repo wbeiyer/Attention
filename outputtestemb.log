@@ -4,8 +4,8 @@ nohup: ignoring input
                batch_size: 1                             
           checkpoints_dir: ./checkpoints                 
                 crop_size: 256                           
-                 dataroot: ./datasets/thread             	[default: None]
-             dataset_mode: unaligned                     
+                 dataroot: ./datasets/thread/testA       	[default: None]
+             dataset_mode: single                        
                 direction: AtoB                          
           display_winsize: 256                           
                     epoch: latest                        
@@ -18,14 +18,15 @@ nohup: ignoring input
                 load_iter: 0                             	[default: 0]
                 load_size: 256                           
          max_dataset_size: inf                           
-                    model: attention_gan                 	[default: test]
+                    model: test                          
+             model_suffix:                               
                n_layers_D: 3                             
-                     name: thread_attentiongan           	[default: experiment_name]
+                     name: thread_attentiongann_emb      	[default: experiment_name]
                       ndf: 64                            
                      netD: basic                         
                      netG: resnet_9blocks                
                       ngf: 64                            
-               no_dropout: True                          
+               no_dropout: True                          	[default: False]
                   no_flip: False                         
                      norm: instance                      
                     ntest: inf                           
@@ -40,14 +41,12 @@ nohup: ignoring input
                    suffix:                               
                   verbose: False                         
 ----------------- End -------------------
-dataset [UnalignedDataset] was created
+dataset [SingleDataset] was created
 initialize network with normal
-initialize network with normal
-model [AttentionGANModel] was created
-loading the model from ./checkpoints/thread_attentiongan/latest_net_G_A.pth
-loading the model from ./checkpoints/thread_attentiongan/latest_net_G_B.pth
+model [TestModel] was created
+loading the model from ./checkpoints/thread_attentiongann_emb/latest_net_G.pth
 ---------- Networks initialized -------------
-[Network G_A] Total number of parameters : 11.823 M
-[Network G_B] Total number of parameters : 11.823 M
+[Network G] Total number of parameters : 11.823 M
 -----------------------------------------------
 processing (0000)-th image... ['./datasets/thread/testA/1_6.PNG']
+processing (0005)-th image... ['./datasets/thread/testA/4_4.PNG']
