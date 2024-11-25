@@ -4,7 +4,7 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 import torch.nn.functional as F
-
+import numpy as np
 
 ###############################################################################
 # Helper Functions
@@ -278,7 +278,6 @@ class GANLoss(nn.Module):
                 loss = prediction.mean()
         return loss
 
-
 def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', constant=1.0, lambda_gp=10.0):
     """Calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028
 
@@ -314,7 +313,6 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
         return gradient_penalty, gradients
     else:
         return 0.0, None
-
 
 class ResnetGenerator(nn.Module):
     """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.
@@ -375,156 +373,6 @@ class ResnetGenerator(nn.Module):
     def forward(self, input):
         """Standard forward"""
         return self.model(input)
-
-class ResnetGenerator_our(nn.Module):
-    # initializers
-    def __init__(self, input_nc, output_nc, ngf=64, n_blocks=9):
-        super(ResnetGenerator_our, self).__init__()
-        self.input_nc = input_nc
-        self.output_nc = output_nc
-        self.ngf = ngf
-        self.nb = n_blocks
-        self.conv1 = nn.Conv2d(input_nc, ngf, 7, 1, 0)
-        self.conv1_norm = nn.InstanceNorm2d(ngf)
-        self.conv2 = nn.Conv2d(ngf, ngf * 2, 3, 2, 1)
-        self.conv2_norm = nn.InstanceNorm2d(ngf * 2)
-        self.conv3 = nn.Conv2d(ngf * 2, ngf * 4, 3, 2, 1)
-        self.conv3_norm = nn.InstanceNorm2d(ngf * 4)
-
-        self.resnet_blocks = []
-        for i in range(n_blocks):
-            self.resnet_blocks.append(resnet_block(ngf * 4, 3, 1, 1))
-            self.resnet_blocks[i].weight_init(0, 0.02)
-
-        self.resnet_blocks = nn.Sequential(*self.resnet_blocks)
-
-        # self.resnet_blocks1 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks1.weight_init(0, 0.02)
-        # self.resnet_blocks2 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks2.weight_init(0, 0.02)
-        # self.resnet_blocks3 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks3.weight_init(0, 0.02)
-        # self.resnet_blocks4 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks4.weight_init(0, 0.02)
-        # self.resnet_blocks5 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks5.weight_init(0, 0.02)
-        # self.resnet_blocks6 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks6.weight_init(0, 0.02)
-        # self.resnet_blocks7 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks7.weight_init(0, 0.02)
-        # self.resnet_blocks8 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks8.weight_init(0, 0.02)
-        # self.resnet_blocks9 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks9.weight_init(0, 0.02)
-
-        self.deconv1_content = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
-        self.deconv1_norm_content = nn.InstanceNorm2d(ngf * 2)
-        self.deconv2_content = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
-        self.deconv2_norm_content = nn.InstanceNorm2d(ngf)
-        self.deconv3_content = nn.Conv2d(ngf, 27, 7, 1, 0)
-
-        self.deconv1_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
-        self.deconv1_norm_attention = nn.InstanceNorm2d(ngf * 2)
-        self.deconv2_attention = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
-        self.deconv2_norm_attention = nn.InstanceNorm2d(ngf)
-        self.deconv3_attention = nn.Conv2d(ngf, 10, 1, 1, 0)
-        
-        self.tanh = torch.nn.Tanh()
-    # weight_init
-    def weight_init(self, mean, std):
-        for m in self._modules:
-            normal_init(self._modules[m], mean, std)
-
-    # forward method
-    def forward(self, input):
-        # 反射填充 256*256*3 --> 262*262*3
-        x = F.pad(input, (3, 3, 3, 3), 'reflect')
-        x = F.relu(self.conv1_norm(self.conv1(x)))
-        x = F.relu(self.conv2_norm(self.conv2(x)))
-        x = F.relu(self.conv3_norm(self.conv3(x)))
-        x = self.resnet_blocks(x)
-        # x = self.resnet_blocks1(x)
-        # x = self.resnet_blocks2(x)
-        # x = self.resnet_blocks3(x)
-        # x = self.resnet_blocks4(x)
-        # x = self.resnet_blocks5(x)
-        # x = self.resnet_blocks6(x)
-        # x = self.resnet_blocks7(x)
-        # x = self.resnet_blocks8(x)
-        # x = self.resnet_blocks9(x)
-        x_content = F.relu(self.deconv1_norm_content(self.deconv1_content(x)))
-        x_content = F.relu(self.deconv2_norm_content(self.deconv2_content(x_content)))
-        x_content = F.pad(x_content, (3, 3, 3, 3), 'reflect')
-        content = self.deconv3_content(x_content)
-        image = self.tanh(content)
-        # 1-7纹理内容
-        image1 = image[:, 0:3, :, :]
-        # print(image1.size()) # [1, 3, 256, 256]
-        image2 = image[:, 3:6, :, :]
-        image3 = image[:, 6:9, :, :]
-        image4 = image[:, 9:12, :, :]
-        image5 = image[:, 12:15, :, :]
-        image6 = image[:, 15:18, :, :]
-        image7 = image[:, 18:21, :, :]
-        #8-9 色彩内容
-        image8 = image[:, 21:24, :, :]
-        image9 = image[:, 24:27, :, :]
-        # image10 = image[:, 27:30, :, :]
-
-        x_attention = F.relu(self.deconv1_norm_attention(self.deconv1_attention(x)))
-        x_attention = F.relu(self.deconv2_norm_attention(self.deconv2_attention(x_attention)))
-        # x_attention = F.pad(x_attention, (3, 3, 3, 3), 'reflect')
-        # print(x_attention.size()) [1, 64, 256, 256]
-        attention = self.deconv3_attention(x_attention)
-        # 1*10*256*256 10个通道的数值求softmax 加起来的值是1
-        softmax_ = torch.nn.Softmax(dim=1)
-        attention = softmax_(attention)
-        # attention1的维度 [1, 1, 256, 256]
-        # 1-7纹理注意力
-        attention1_ = attention[:, 0:1, :, :]
-        attention2_ = attention[:, 1:2, :, :]
-        attention3_ = attention[:, 2:3, :, :]
-        attention4_ = attention[:, 3:4, :, :]
-        attention5_ = attention[:, 4:5, :, :]
-        attention6_ = attention[:, 5:6, :, :]
-        attention7_ = attention[:, 6:7, :, :]
-        # 8-9色彩注意力
-        attention8_ = attention[:, 7:8, :, :]
-        attention9_ = attention[:, 8:9, :, :]
-        # 原图的注意力
-        attention10_ = attention[:, 9:10, :, :]
-
-        # print(attention1.size()) 将通道数扩到3 大小变成[1, 3, 256, 256]
-        # 1-7 纹理图权重
-        attention1 = attention1_.repeat(1, 3, 1, 1) 
-        attention2 = attention2_.repeat(1, 3, 1, 1)
-        attention3 = attention3_.repeat(1, 3, 1, 1)
-        attention4 = attention4_.repeat(1, 3, 1, 1)
-        attention5 = attention5_.repeat(1, 3, 1, 1)
-        attention6 = attention6_.repeat(1, 3, 1, 1)
-        attention7 = attention7_.repeat(1, 3, 1, 1)
-        # 8-10 色彩图权重
-        attention8 = attention8_.repeat(1, 3, 1, 1)
-        attention9 = attention9_.repeat(1, 3, 1, 1)
-        attention10 = attention10_.repeat(1, 3, 1, 1)
-
-        output1 = image1 * attention1
-        output2 = image2 * attention2
-        output3 = image3 * attention3
-        output4 = image4 * attention4
-        output5 = image5 * attention5
-        output6 = image6 * attention6
-        output7 = image7 * attention7
-        output8 = image8 * attention8
-        output9 = image9 * attention9
-        # output10 = image10 * attention10 为了保留颜色
-        output10 = input * attention10
-
-        et=output1 + output2 + output3 + output4 + output5 + output6 + output7
-        ec=output8 + output9 + output10
-        o=et+ec
-
-        return o,et,ec, output1, output2, output3, output4, output5, output6, output7, output8, output9, output10, attention1,attention2,attention3, attention4, attention5, attention6, attention7, attention8,attention9,attention10, image1, image2,image3,image4,image5,image6,image7,image8,image9
 
 # resnet block with reflect padding
 class resnet_block(nn.Module):
@@ -616,7 +464,6 @@ class ResnetBlock(nn.Module):
         out = x + self.conv_block(x)  # add skip connections
         return out
 
-
 class UnetGenerator(nn.Module):
     """Create a Unet-based generator"""
 
@@ -647,7 +494,6 @@ class UnetGenerator(nn.Module):
     def forward(self, input):
         """Standard forward"""
         return self.model(input)
-
 
 class UnetSkipConnectionBlock(nn.Module):
     """Defines the Unet submodule with skip connection.
@@ -718,7 +564,6 @@ class UnetSkipConnectionBlock(nn.Module):
         else:   # add skip connections
             return torch.cat([x, self.model(x)], 1)
 
-
 class NLayerDiscriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
 
@@ -766,7 +611,6 @@ class NLayerDiscriminator(nn.Module):
         """Standard forward."""
         return self.model(input)
 
-
 class PixelDiscriminator(nn.Module):
     """Defines a 1x1 PatchGAN discriminator (pixelGAN)"""
 
@@ -797,20 +641,154 @@ class PixelDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.net(input)
+def get_wav(in_channels, pool=True):
+    """wavelet decomposition using conv2d"""
+    harr_wav_L = 1 / np.sqrt(2) * np.ones((1, 2))
+    harr_wav_H = 1 / np.sqrt(2) * np.ones((1, 2))
+    harr_wav_H[0, 0] = -1 * harr_wav_H[0, 0]
 
-class Encoder(nn.Module):
+    harr_wav_LL = np.transpose(harr_wav_L) * harr_wav_L
+    harr_wav_LH = np.transpose(harr_wav_L) * harr_wav_H
+    harr_wav_HL = np.transpose(harr_wav_H) * harr_wav_L
+    harr_wav_HH = np.transpose(harr_wav_H) * harr_wav_H
+
+    filter_LL = torch.from_numpy(harr_wav_LL).unsqueeze(0)
+   #  print(filter_LL.size())
+    filter_LH = torch.from_numpy(harr_wav_LH).unsqueeze(0)
+    filter_HL = torch.from_numpy(harr_wav_HL).unsqueeze(0)
+    filter_HH = torch.from_numpy(harr_wav_HH).unsqueeze(0)
+
+    if pool:
+        # 尺寸减半 
+        net = nn.Conv2d
+    else:
+        # 尺寸加倍
+        net = nn.ConvTranspose2d
+    LL = net(in_channels, in_channels*2,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    LH = net(in_channels, in_channels*2,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    HL = net(in_channels, in_channels*2,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    HH = net(in_channels, in_channels*2,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+
+    LL.weight.requires_grad = False
+    LH.weight.requires_grad = False
+    HL.weight.requires_grad = False
+    HH.weight.requires_grad = False
+
+    LL.weight.data = filter_LL.float().unsqueeze(0).expand(in_channels*2, -1, -1, -1).clone()
+    LH.weight.data = filter_LH.float().unsqueeze(0).expand(in_channels*2, -1, -1, -1).clone()
+    HL.weight.data = filter_HL.float().unsqueeze(0).expand(in_channels*2, -1, -1, -1).clone()
+    HH.weight.data = filter_HH.float().unsqueeze(0).expand(in_channels*2, -1, -1, -1).clone()
+
+    return LL, LH, HL, HH
+# 输出通道是输入通道的两倍
+class WavePool(nn.Module):
+    def __init__(self, in_channels):
+        super(WavePool, self).__init__()
+        self.LL, self.LH, self.HL, self.HH = get_wav(in_channels)
+
+    def forward(self, x):
+        return self.LL(x), self.LH(x), self.HL(x), self.HH(x)
+# 输出通道等于输出通道
+def get_wav_two(in_channels, pool=True):
+    """wavelet decomposition using conv2d"""
+    harr_wav_L = 1 / np.sqrt(2) * np.ones((1, 2))
+    harr_wav_H = 1 / np.sqrt(2) * np.ones((1, 2))
+    harr_wav_H[0, 0] = -1 * harr_wav_H[0, 0]
+
+    harr_wav_LL = np.transpose(harr_wav_L) * harr_wav_L
+    harr_wav_LH = np.transpose(harr_wav_L) * harr_wav_H
+    harr_wav_HL = np.transpose(harr_wav_H) * harr_wav_L
+    harr_wav_HH = np.transpose(harr_wav_H) * harr_wav_H
+
+    filter_LL = torch.from_numpy(harr_wav_LL).unsqueeze(0)
+   #  print(filter_LL.size())
+    filter_LH = torch.from_numpy(harr_wav_LH).unsqueeze(0)
+    filter_HL = torch.from_numpy(harr_wav_HL).unsqueeze(0)
+    filter_HH = torch.from_numpy(harr_wav_HH).unsqueeze(0)
+
+    if pool:
+        net = nn.Conv2d
+    else:
+        net = nn.ConvTranspose2d
+    LL = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    LH = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    HL = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    HH = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+
+    LL.weight.requires_grad = False
+    LH.weight.requires_grad = False
+    HL.weight.requires_grad = False
+    HH.weight.requires_grad = False
+
+    LL.weight.data = filter_LL.float().unsqueeze(0).expand(in_channels, -1, -1, -1).clone()
+    LH.weight.data = filter_LH.float().unsqueeze(0).expand(in_channels, -1, -1, -1).clone()
+    HL.weight.data = filter_HL.float().unsqueeze(0).expand(in_channels, -1, -1, -1).clone()
+    HH.weight.data = filter_HH.float().unsqueeze(0).expand(in_channels, -1, -1, -1).clone()
+
+    return LL, LH, HL, HH
+# 输入通道等于输出通道
+class WavePool2(nn.Module):
+    def __init__(self, in_channels):
+        super(WavePool2, self).__init__()
+        self.LL, self.LH, self.HL, self.HH = get_wav_two(in_channels)
+
+    def forward(self, x):
+        return self.LL(x), self.LH(x), self.HL(x), self.HH(x)
+
+class WaveUnpool(nn.Module):
+    def __init__(self, in_channels, option_unpool='cat5'):
+        super(WaveUnpool, self).__init__()
+        self.in_channels = in_channels
+        self.option_unpool = option_unpool
+        self.LL, self.LH, self.HL, self.HH = get_wav_two(self.in_channels, pool=False)
+
+    def forward(self, LL, LH, HL, HH, original=None):
+        if self.option_unpool == 'sum':
+            return self.LL(LL) + self.LH(LH) + self.HL(HL) + self.HH(HH)
+        elif self.option_unpool == 'cat5' and original is not None:
+            return torch.cat([self.LL(LL), self.LH(LH), self.HL(HL), self.HH(HH), original], dim=1)
+        elif self.option_unpool =='sumall':
+            return LL + LH + HL + HH
+        else:
+            raise NotImplementedError
+
+class ResnetGenerator_our(nn.Module):
     def __init__(self, input_nc, output_nc, ngf=64, n_blocks=9):
-        super(Encoder, self).__init__()
+        super(ResnetGenerator_our, self).__init__()
         self.input_nc = input_nc
         self.output_nc = output_nc
         self.ngf = ngf
         self.nb = n_blocks
         self.conv1 = nn.Conv2d(input_nc, ngf, 7, 1, 0)
         self.conv1_norm = nn.InstanceNorm2d(ngf)
+        self.pool1 = WavePool(ngf)
         self.conv2 = nn.Conv2d(ngf, ngf * 2, 3, 2, 1)
         self.conv2_norm = nn.InstanceNorm2d(ngf * 2)
+        self.pool2 = WavePool(ngf*2)
         self.conv3 = nn.Conv2d(ngf * 2, ngf * 4, 3, 2, 1)
         self.conv3_norm = nn.InstanceNorm2d(ngf * 4)
+        self.pool3 = WavePool2(ngf*4)
+        self.conv4 = nn.Conv2d(ngf * 4, ngf * 4, 3, 2, 1)
+        self.conv4_norm = nn.InstanceNorm2d(ngf * 4)
+        self.pool4 = WavePool2(ngf*4)
+        self.conv5 = nn.Conv2d(ngf * 4, ngf * 4, 3, 2, 1)
+        self.conv5_norm = nn.InstanceNorm2d(ngf * 4)
 
         self.resnet_blocks = []
         for i in range(n_blocks):
@@ -819,38 +797,37 @@ class Encoder(nn.Module):
 
         self.resnet_blocks = nn.Sequential(*self.resnet_blocks)
 
-        # self.resnet_blocks1 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks1.weight_init(0, 0.02)
-        # self.resnet_blocks2 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks2.weight_init(0, 0.02)
-        # self.resnet_blocks3 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks3.weight_init(0, 0.02)
-        # self.resnet_blocks4 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks4.weight_init(0, 0.02)
-        # self.resnet_blocks5 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks5.weight_init(0, 0.02)
-        # self.resnet_blocks6 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks6.weight_init(0, 0.02)
-        # self.resnet_blocks7 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks7.weight_init(0, 0.02)
-        # self.resnet_blocks8 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks8.weight_init(0, 0.02)
-        # self.resnet_blocks9 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks9.weight_init(0, 0.02)
+        self.deconv5 = nn.Conv2d(ngf*4, ngf*4, 3, 1, 1)
+        self.deconv5_norm = nn.InstanceNorm2d(ngf*4)
 
-        self.deconv1_content = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
-        self.deconv1_norm_content = nn.InstanceNorm2d(ngf * 2)
-        self.deconv2_content = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
-        self.deconv2_norm_content = nn.InstanceNorm2d(ngf)
-        self.deconv3_content = nn.Conv2d(ngf, 27, 7, 1, 0)
+        self.recon_block4 = WaveUnpool(ngf*4,"sum")
+        self.deconv4 = nn.Conv2d(ngf*4, ngf * 4, 3, 1, 1)
+        self.deconv4_norm = nn.InstanceNorm2d(ngf * 2)
 
-        self.deconv1_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
-        self.deconv1_norm_attention = nn.InstanceNorm2d(ngf * 2)
-        self.deconv2_attention = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
-        self.deconv2_norm_attention = nn.InstanceNorm2d(ngf)
-        self.deconv3_attention = nn.Conv2d(ngf, 10, 1, 1, 0)
+        self.recon_block3 = WaveUnpool(ngf*4, "sum")
+        self.deconv3 = nn.Conv2d(ngf * 4, ngf * 2, 3, 1, 1)
+        self.deconv3_norm = nn.InstanceNorm2d(ngf * 2)
+
+        self.recon_block2 = WaveUnpool(ngf * 2, "sumall")
+        self.deconv2 = nn.Conv2d(ngf * 2, ngf, 3, 1, 1)
+        self.deconv2_norm = nn.InstanceNorm2d(ngf)
+
+        self.recon_block1 = WaveUnpool(ngf, "sum")
+        self.deconv1_c = nn.Conv2d(ngf, 27, 7, 1, 0)
         
+        self.deconv5_attention = nn.ConvTranspose2d(ngf * 4, ngf * 4, 3, 2, 1, 1)
+        self.deconv5_norm_attention = nn.InstanceNorm2d(ngf * 4)
+        self.deconv4_attention = nn.ConvTranspose2d(ngf * 4, ngf * 4, 3, 2, 1, 1)
+        self.deconv4_norm_attention = nn.InstanceNorm2d(ngf * 4)
+        self.deconv3_attention = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
+        self.deconv3_norm_attention = nn.InstanceNorm2d(ngf * 4)
+        self.deconv2_attention = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
+        self.deconv2_norm_attention = nn.InstanceNorm2d(ngf * 4)
+        self.deconv1_a = nn.Conv2d(ngf, 10, 1, 1, 0)
+        
+        self.leaky_relu =torch.nn.LeakyReLU(0.2,inplace=False)
         self.tanh = torch.nn.Tanh()
+        self.Upsample = nn.Upsample(scale_factor=2)
     # weight_init
     def weight_init(self, mean, std):
         for m in self._modules:
@@ -860,24 +837,59 @@ class Encoder(nn.Module):
     def forward(self, input):
         # 反射填充 256*256*3 --> 262*262*3
         x = F.pad(input, (3, 3, 3, 3), 'reflect')
-        x = F.relu(self.conv1_norm(self.conv1(x)))
-        x = F.relu(self.conv2_norm(self.conv2(x)))
-        x = F.relu(self.conv3_norm(self.conv3(x)))
-        x = self.resnet_blocks(x)
-        # x = self.resnet_blocks1(x)
-        # x = self.resnet_blocks2(x)
-        # x = self.resnet_blocks3(x)
-        # x = self.resnet_blocks4(x)
-        # x = self.resnet_blocks5(x)
-        # x = self.resnet_blocks6(x)
-        # x = self.resnet_blocks7(x)
-        # x = self.resnet_blocks8(x)
-        # x = self.resnet_blocks9(x)
-        x_content = F.relu(self.deconv1_norm_content(self.deconv1_content(x)))
-        x_content = F.relu(self.deconv2_norm_content(self.deconv2_content(x_content)))
-        x_content = F.pad(x_content, (3, 3, 3, 3), 'reflect')
-        content = self.deconv3_content(x_content)
-        image = self.tanh(content)
+        x1 = self.leaky_relu(self.conv1_norm(self.conv1(x)))
+        LL1, LH1, HL1, HH1 = self.pool1(x1)
+        x2 = self.leaky_relu(self.conv2_norm(self.conv2(x1)))
+        LL2, LH2, HL2, HH2 = self.pool2(x2)
+        # LL1是x1的一部分 x2=f(x1) 相当于把x1和f(x1)一起作为输入送给下一个卷积层
+        x3 = self.leaky_relu(self.conv3_norm(self.conv3(x2+LL1)))
+        LL3, LH3, HL3, HH3 = self.pool3(x3)
+        x4 = self.leaky_relu(self.conv4_norm(self.conv4(x3+LL2)))
+        LL4, LH4, HL4, HH4 = self.pool4(x4)
+        x5 = self.leaky_relu(self.conv5_norm(self.conv5(x4+LL3)))
+
+        # x5 = self.resnet_blocks(x5)
+        # print("x5 size:", x5.size())
+
+        c4u = self.Upsample(x5)
+        # print("c4u size:", c4u.size())
+        c4 = self.leaky_relu(self.deconv5_norm(self.deconv5(c4u)))
+        # print("c4 size:", c4.size())
+
+        # x5(,ngf*4,16,16) LH4(,ngf*4,16,16) x4_deconv(,ngf*4,32,32)
+        x4_deconv = self.recon_block4(x5, LH4, HL4, HH4)
+        # print("x4_deconv size:", x4_deconv.size())
+        c3u = self.Upsample(c4+x4_deconv)
+        # print("c3u size:", c3u.size())
+        c3 = self.leaky_relu(self.deconv4_norm(self.deconv4(c3u)))
+        # print("c3 size:", c3.size())
+
+        x3_deconv = self.recon_block4(c4u, LH3, HL3, HH3)
+        # print("x3_deconv size:", x3_deconv.size())
+        x2_deconv = self.recon_block4(c3u, LH2, HL2, HH2)
+        # print("x2_deconv size:", x2_deconv.size())
+
+        c2u = self.Upsample(c3+x3_deconv)
+        # print("c2u size:", c2u.size())
+        c2 = self.leaky_relu(self.deconv3_norm(self.deconv3(c2u+x2_deconv)))
+        # print("c2 size:", c2.size())
+
+        x1_deconv = self.recon_block2(c2, LH1, HL1, HH1)
+        # print("x1_deconv size:", x1_deconv.size())
+        c1u = self.Upsample(c2+x1_deconv)
+        # print("c1u size:", c1u.size())
+        c1 = self.leaky_relu(self.deconv2_norm(self.deconv2(c1u)))
+        # print("c1 size:", c1.size())
+
+    
+        # c = self.Upsample(c1)
+        # c = self.leaky_relu(self.deconv1_norm(self.deconv1(c+x1_deconv)))
+        c = F.pad(c1, (3, 3, 3, 3), 'reflect')
+        # print("c size:", c.size())
+        c=self.deconv1_c(c)
+        # print("c size:", c.size())
+        image=self.tanh(c)
+
         # 1-7纹理内容
         image1 = image[:, 0:3, :, :]
         # print(image1.size()) # [1, 3, 256, 256]
@@ -892,15 +904,15 @@ class Encoder(nn.Module):
         image9 = image[:, 24:27, :, :]
         # image10 = image[:, 27:30, :, :]
 
-        x_attention = F.relu(self.deconv1_norm_attention(self.deconv1_attention(x)))
-        x_attention = F.relu(self.deconv2_norm_attention(self.deconv2_attention(x_attention)))
-        # x_attention = F.pad(x_attention, (3, 3, 3, 3), 'reflect')
-        # print(x_attention.size()) [1, 64, 256, 256]
-        attention = self.deconv3_attention(x_attention)
+        a4 = F.relu(self.deconv5_norm_attention(self.deconv5_attention(x5)))
+        a3 = F.relu(self.deconv4_norm_attention(self.deconv4_attention(a4)))
+        a2 = F.relu(self.deconv3_norm_attention(self.deconv3_attention(a3)))
+        a1 = F.relu(self.deconv2_norm_attention(self.deconv2_attention(a2)))
+        a= self.deconv1_a(a1)
         # 1*10*256*256 10个通道的数值求softmax 加起来的值是1
         softmax_ = torch.nn.Softmax(dim=1)
-        attention = softmax_(attention)
-        # attention1的维度 [1, 1, 256, 256]
+        attention = softmax_(a)
+
         # 1-7纹理注意力
         attention1_ = attention[:, 0:1, :, :]
         attention2_ = attention[:, 1:2, :, :]
@@ -946,121 +958,3 @@ class Encoder(nn.Module):
         o=et+ec
 
         return o,et,ec, output1, output2, output3, output4, output5, output6, output7, output8, output9, output10, attention1,attention2,attention3, attention4, attention5, attention6, attention7, attention8,attention9,attention10, image1, image2,image3,image4,image5,image6,image7,image8,image9
-
-
-
-class Decoder(nn.Module):
-    def __init__(self):
-        super(Decoder, self).__init__()
-
-        self.Upsample = nn.Upsample(scale_factor=2)
-        self.Conv1 = Conv2dBlock(128, 128, 3, 1, 1,
-                             norm='bn',
-                             activation='lrelu',
-                             pad_type='reflect')
-        self.recon_block1 = WaveUnpool(128,"sum").cuda()
-        self.Conv2 = Conv2dBlock(128, 128, 3, 1, 1,
-                             norm='bn',
-                             activation='lrelu',
-                             pad_type='reflect')
-        self.recon_block2 = WaveUnpool(128, "sum").cuda()
-        self.Conv3 = Conv2dBlock(128, 64, 3, 1, 1,
-                             norm='bn',
-                             activation='lrelu',
-                             pad_type='reflect')
-        self.recon_block3 = WaveUnpool(64, "sumall").cuda()
-        self.Conv4 = Conv2dBlock(64, 32, 3, 1, 1,
-                             norm='bn',
-                             activation='lrelu',
-                             pad_type='reflect')
-        self.recon_block4 = WaveUnpool(32, "sum").cuda()
-        self.Conv5 = Conv2dBlock(32, 3, 5, 1, 2,
-                             norm='none',
-                             activation='tanh',
-                             pad_type='reflect')
-#        self.Unpool
-
-        # model = [nn.Upsample(scale_factor=2),
-        #          Conv2dBlock(128, 128, 3, 1, 1,
-        #                      norm='bn',
-        #                      activation='lrelu',
-        #                      pad_type='reflect'),
-        #          nn.Upsample(scale_factor=2),
-        #          Conv2dBlock(128, 128, 3, 1, 1,
-        #                      norm='bn',
-        #                      activation='lrelu',
-        #                      pad_type='reflect'),
-        #          nn.Upsample(scale_factor=2),
-        #          Conv2dBlock(128, 64, 3, 1, 1,
-        #                      norm='bn',
-        #                      activation='lrelu',
-        #                      pad_type='reflect'),
-        #          nn.Upsample(scale_factor=2),
-        #          Conv2dBlock(64, 32, 3, 1, 1,
-        #                      norm='bn',
-        #                      activation='lrelu',
-        #                      pad_type='reflect'),
-        #          Conv2dBlock(32, 3, 5, 1, 2,
-        #                      norm='none',
-        #                      activation='tanh',
-        #                      pad_type='reflect')]
-        # self.model = nn.Sequential(*model)
-
-    def forward(self, x, skips,base_index):
-        x1 = self.Upsample(x)
-        x2 = self.Conv1(x1) #（,128,16,16)
-
-        LH1, HL1, HH1 = skips['pool4']
-        c, h, w = LH1.size()[-3:]
-        # Mean_index
-        # LH1, HL1, HH1 = LH1.view(8,3,c, h, w).mean(dim=1), HL1.view(8,3,c, h, w).mean(dim=1), HH1.view(8,3,c, h, w).mean(dim=1)
-        # Base_index
-        LH1, HL1, HH1 = LH1.view(8, 3,c, h, w), HL1.view(8, 3,c, h, w), HH1.view(8, 3,c, h, w)
-        LH1, HL1, HH1 = LH1[:,base_index,:,:,:], HL1[:,base_index,:,:,:], HH1[:,base_index,:,:,:]
-        original1 = skips['conv4_1']
-        x_deconv = self.recon_block1(x, LH1, HL1, HH1, original1) #（,128,16,16)
-        x3 = self.Upsample(x_deconv + x2)
-        x4 = self.Conv2(x3)
-
-        LH2, HL2, HH2 = skips['pool3']
-        original2 = skips['conv3_1']
-        c, h, w = LH2.size()[-3:]
-        #Mean_index
-        #LH2, HL2, HH2 = LH2.view(8, 3, c, h, w).mean(dim=1), HL2.view(8, 3, c, h, w).mean(dim=1), HH2.view(8, 3, c, h,w).mean(dim=1)
-        # Base_index
-        LH2, HL2, HH2 = LH2.view(8, 3, c, h, w), HL2.view(8, 3, c, h, w), HH2.view(8, 3, c, h, w)
-        LH2, HL2, HH2 = LH2[:, base_index, :, :, :], HL2[:, base_index, :, :, :], HH2[:, base_index, :, :, :]
-        x_deconv2 = self.recon_block1(x1, LH2, HL2, HH2, original2)
-        LH3, HL3, HH3 = skips['pool2']
-        c, h, w = skips['conv2_1'].size()[-3:]
-        original3 = skips['conv2_1']
-        c, h, w = LH3.size()[-3:]
-        #Mean_index
-        #LH3, HL3, HH3 = LH3.view(8, 3, c, h, w).mean(dim=1), HL3.view(8, 3, c, h, w).mean(dim=1), HH3.view(8, 3, c, h,w).mean(dim=1)
-        # Base_index
-        LH3, HL3, HH3 = LH3.view(8, 3, c, h, w), HL3.view(8, 3, c, h, w), HH3.view(8, 3, c, h, w)
-        LH3, HL3, HH3 = LH3[:, base_index, :, :, :], HL3[:, base_index, :, :, :], HH3[:, base_index, :, :, :]
-        x_deconv3 = self.recon_block1(x3, LH3, HL3, HH3, original2)
-        x5 = self.Upsample(x4+x_deconv2)
-        #x5 = self.Upsample(x4)
-        x6 = self.Conv3(x5+x_deconv3)
- 
-        #x6 = self.Conv3(x5)
-        LH4, HL4, HH4 = skips['pool1']
-        original4 = skips['conv1_1']
-        c, h, w = LH4.size()[-3:]
-        # Mean_index
-        #LH4, HL4, HH4 = LH4.view(8, 3, c, h, w).mean(dim=1), HL4.view(8, 3, c, h, w).mean(dim=1), HH4.view(8, 3, c, h,w).mean(dim=1)
-        # Base_index
-        LH4, HL4, HH4 = LH4.view(8, 3, c, h, w), HL4.view(8, 3, c, h, w), HH4.view(8, 3, c, h, w)
-        LH4, HL4, HH4 = LH4[:, base_index, :, :, :], HL4[:, base_index, :, :, :], HH4[:, base_index, :, :, :]
-        x_deconv4 = self.recon_block3(x6, LH4, HL4, HH4, original3)
-        x7 = self.Upsample(x6+x_deconv4)
-        #x7 = self.Upsample(x6)
-        x8 = self.Conv4(x7)
-
-
-        x9 = self.Conv5(x8)
-
-        return x9
-

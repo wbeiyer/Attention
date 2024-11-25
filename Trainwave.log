@@ -1,0 +1,371 @@
+nohup: ignoring input
+----------------- Options ---------------
+               batch_size: 32                            	[default: 1]
+                    beta1: 0.5                           
+          checkpoints_dir: ./checkpoints                 
+           continue_train: False                         
+                crop_size: 256                           
+                 dataroot: ./datasets/thread             	[default: None]
+             dataset_mode: unaligned                     
+                direction: AtoB                          
+              display_env: main                          
+             display_freq: 400                           
+               display_id: 1                             
+            display_ncols: 10                            
+             display_port: 8097                          
+           display_server: http://localhost              
+          display_winsize: 256                           
+                    epoch: latest                        
+              epoch_count: 1                             
+                 gan_mode: lsgan                         
+                  gpu_ids: 0,1,2,3,4,5,6,7               	[default: 0]
+                init_gain: 0.02                          
+                init_type: normal                        
+                 input_nc: 3                             
+                  isTrain: True                          	[default: None]
+                 lambda_A: 10.0                          
+          lambda_identity: 0.5                           
+                load_iter: 0                             	[default: 0]
+                load_size: 286                           
+                       lr: 0.0002                        
+           lr_decay_iters: 50                            
+                lr_policy: linear                        
+         max_dataset_size: inf                           
+                    model: attention_gan                 	[default: cycle_gan]
+               n_layers_D: 3                             
+                     name: thread_attentiongan           	[default: experiment_name]
+                      ndf: 64                            
+                     netD: basic                         
+                     netG: resnet_9blocks                
+                      ngf: 64                            
+                    niter: 60                            
+              niter_decay: 60                            
+               no_dropout: True                          
+                  no_flip: False                         
+                  no_html: False                         
+                     norm: instance                      
+              num_threads: 4                             
+                output_nc: 3                             
+                    phase: train                         
+                pool_size: 50                            
+               preprocess: resize_and_crop               
+               print_freq: 100                           
+                 saveDisk: False                         
+             save_by_iter: False                         
+          save_epoch_freq: 10                            
+         save_latest_freq: 5000                          
+           serial_batches: False                         
+                   suffix:                               
+         update_html_freq: 1000                          
+                  verbose: False                         
+----------------- End -------------------
+dataset [UnalignedDataset] was created
+The number of training images = 16224
+initialize network with normal
+initialize network with normal
+model [AttentionGANModel] was created
+---------- Networks initialized -------------
+[Network G] Total number of parameters : 15.389 M
+[Network D] Total number of parameters : 2.765 M
+-----------------------------------------------
+End of epoch 1 / 120 	 
+learning rate = 0.0002000
+End of epoch 2 / 120 	 
+learning rate = 0.0002000
+End of epoch 3 / 120 	 
+learning rate = 0.0002000
+End of epoch 4 / 120 	 
+learning rate = 0.0002000
+End of epoch 5 / 120 	 
+learning rate = 0.0002000
+End of epoch 6 / 120 	 
+learning rate = 0.0002000
+End of epoch 7 / 120 	 
+learning rate = 0.0002000
+End of epoch 8 / 120 	 
+learning rate = 0.0002000
+End of epoch 9 / 120 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 10, iters 162240
+D: 0.007407945414538508
+G: 0.02273644013165017
+idt: 0.00017891792979285318
+color: 0.01112540713392007
+End of epoch 10 / 120 	 
+learning rate = 0.0002000
+End of epoch 11 / 120 	 
+learning rate = 0.0002000
+End of epoch 12 / 120 	 
+learning rate = 0.0002000
+End of epoch 13 / 120 	 
+learning rate = 0.0002000
+End of epoch 14 / 120 	 
+learning rate = 0.0002000
+End of epoch 15 / 120 	 
+learning rate = 0.0002000
+End of epoch 16 / 120 	 
+learning rate = 0.0002000
+End of epoch 17 / 120 	 
+learning rate = 0.0002000
+End of epoch 18 / 120 	 
+learning rate = 0.0002000
+End of epoch 19 / 120 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 20, iters 324480
+D: 0.00720065599353341
+G: 0.023651006080474726
+idt: 0.00012365655664879768
+color: 0.012603792126788308
+End of epoch 20 / 120 	 
+learning rate = 0.0002000
+End of epoch 21 / 120 	 
+learning rate = 0.0002000
+End of epoch 22 / 120 	 
+learning rate = 0.0002000
+End of epoch 23 / 120 	 
+learning rate = 0.0002000
+End of epoch 24 / 120 	 
+learning rate = 0.0002000
+End of epoch 25 / 120 	 
+learning rate = 0.0002000
+End of epoch 26 / 120 	 
+learning rate = 0.0002000
+End of epoch 27 / 120 	 
+learning rate = 0.0002000
+End of epoch 28 / 120 	 
+learning rate = 0.0002000
+End of epoch 29 / 120 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 30, iters 486720
+D: 0.006894738908445636
+G: 0.024136767561016587
+idt: 8.325907226904994e-05
+color: 0.013262812143717056
+End of epoch 30 / 120 	 
+learning rate = 0.0002000
+End of epoch 31 / 120 	 
+learning rate = 0.0002000
+End of epoch 32 / 120 	 
+learning rate = 0.0002000
+End of epoch 33 / 120 	 
+learning rate = 0.0002000
+End of epoch 34 / 120 	 
+learning rate = 0.0002000
+End of epoch 35 / 120 	 
+learning rate = 0.0002000
+End of epoch 36 / 120 	 
+learning rate = 0.0002000
+End of epoch 37 / 120 	 
+learning rate = 0.0002000
+End of epoch 38 / 120 	 
+learning rate = 0.0002000
+End of epoch 39 / 120 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 40, iters 648960
+D: 0.006723402934130538
+G: 0.024731367064136606
+idt: 4.541145681852233e-05
+color: 0.013522980269963101
+End of epoch 40 / 120 	 
+learning rate = 0.0002000
+End of epoch 41 / 120 	 
+learning rate = 0.0002000
+End of epoch 42 / 120 	 
+learning rate = 0.0002000
+End of epoch 43 / 120 	 
+learning rate = 0.0002000
+End of epoch 44 / 120 	 
+learning rate = 0.0002000
+End of epoch 45 / 120 	 
+learning rate = 0.0002000
+End of epoch 46 / 120 	 
+learning rate = 0.0002000
+End of epoch 47 / 120 	 
+learning rate = 0.0002000
+End of epoch 48 / 120 	 
+learning rate = 0.0002000
+End of epoch 49 / 120 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 50, iters 811200
+D: 0.00665469942210312
+G: 0.024424631866815646
+idt: 3.78780518821065e-05
+color: 0.013658863514353185
+End of epoch 50 / 120 	 
+learning rate = 0.0002000
+End of epoch 51 / 120 	 
+learning rate = 0.0002000
+End of epoch 52 / 120 	 
+learning rate = 0.0002000
+End of epoch 53 / 120 	 
+learning rate = 0.0002000
+End of epoch 54 / 120 	 
+learning rate = 0.0002000
+End of epoch 55 / 120 	 
+learning rate = 0.0002000
+End of epoch 56 / 120 	 
+learning rate = 0.0002000
+End of epoch 57 / 120 	 
+learning rate = 0.0002000
+End of epoch 58 / 120 	 
+learning rate = 0.0002000
+End of epoch 59 / 120 	 
+learning rate = 0.0002000
+saving the model at the end of epoch 60, iters 973440
+D: 0.006213972014347477
+G: 0.026149006924156608
+idt: 5.4875246293847613e-05
+color: 0.014284247504932993
+End of epoch 60 / 120 	 
+learning rate = 0.0001967
+End of epoch 61 / 120 	 
+learning rate = 0.0001934
+End of epoch 62 / 120 	 
+learning rate = 0.0001902
+End of epoch 63 / 120 	 
+learning rate = 0.0001869
+End of epoch 64 / 120 	 
+learning rate = 0.0001836
+End of epoch 65 / 120 	 
+learning rate = 0.0001803
+End of epoch 66 / 120 	 
+learning rate = 0.0001770
+End of epoch 67 / 120 	 
+learning rate = 0.0001738
+End of epoch 68 / 120 	 
+learning rate = 0.0001705
+End of epoch 69 / 120 	 
+learning rate = 0.0001672
+saving the model at the end of epoch 70, iters 1135680
+D: 0.013581620103585913
+G: 0.02829796930910979
+idt: 0.0002462271858486814
+color: 0.0079404200730887
+End of epoch 70 / 120 	 
+learning rate = 0.0001639
+End of epoch 71 / 120 	 
+learning rate = 0.0001607
+End of epoch 72 / 120 	 
+learning rate = 0.0001574
+End of epoch 73 / 120 	 
+learning rate = 0.0001541
+End of epoch 74 / 120 	 
+learning rate = 0.0001508
+End of epoch 75 / 120 	 
+learning rate = 0.0001475
+End of epoch 76 / 120 	 
+learning rate = 0.0001443
+End of epoch 77 / 120 	 
+learning rate = 0.0001410
+End of epoch 78 / 120 	 
+learning rate = 0.0001377
+End of epoch 79 / 120 	 
+learning rate = 0.0001344
+saving the model at the end of epoch 80, iters 1297920
+D: 0.0051221197780545
+G: 0.02643599676030745
+idt: 5.1264876757586016e-05
+color: 0.011836296447076976
+End of epoch 80 / 120 	 
+learning rate = 0.0001311
+End of epoch 81 / 120 	 
+learning rate = 0.0001279
+End of epoch 82 / 120 	 
+learning rate = 0.0001246
+End of epoch 83 / 120 	 
+learning rate = 0.0001213
+End of epoch 84 / 120 	 
+learning rate = 0.0001180
+End of epoch 85 / 120 	 
+learning rate = 0.0001148
+End of epoch 86 / 120 	 
+learning rate = 0.0001115
+End of epoch 87 / 120 	 
+learning rate = 0.0001082
+End of epoch 88 / 120 	 
+learning rate = 0.0001049
+End of epoch 89 / 120 	 
+learning rate = 0.0001016
+saving the model at the end of epoch 90, iters 1460160
+D: 0.00423186857306584
+G: 0.029234388508857824
+idt: 5.043474222584623e-05
+color: 0.011152921808439012
+End of epoch 90 / 120 	 
+learning rate = 0.0000984
+End of epoch 91 / 120 	 
+learning rate = 0.0000951
+End of epoch 92 / 120 	 
+learning rate = 0.0000918
+End of epoch 93 / 120 	 
+learning rate = 0.0000885
+End of epoch 94 / 120 	 
+learning rate = 0.0000852
+End of epoch 95 / 120 	 
+learning rate = 0.0000820
+End of epoch 96 / 120 	 
+learning rate = 0.0000787
+End of epoch 97 / 120 	 
+learning rate = 0.0000754
+End of epoch 98 / 120 	 
+learning rate = 0.0000721
+End of epoch 99 / 120 	 
+learning rate = 0.0000689
+saving the model at the end of epoch 100, iters 1622400
+D: 0.003981257639127311
+G: 0.0330252370354398
+idt: 4.474576875369306e-05
+color: 0.014902609679664263
+End of epoch 100 / 120 	 
+learning rate = 0.0000656
+End of epoch 101 / 120 	 
+learning rate = 0.0000623
+End of epoch 102 / 120 	 
+learning rate = 0.0000590
+End of epoch 103 / 120 	 
+learning rate = 0.0000557
+End of epoch 104 / 120 	 
+learning rate = 0.0000525
+End of epoch 105 / 120 	 
+learning rate = 0.0000492
+End of epoch 106 / 120 	 
+learning rate = 0.0000459
+End of epoch 107 / 120 	 
+learning rate = 0.0000426
+End of epoch 108 / 120 	 
+learning rate = 0.0000393
+End of epoch 109 / 120 	 
+learning rate = 0.0000361
+saving the model at the end of epoch 110, iters 1784640
+D: 0.003063415179462622
+G: 0.03350464901583787
+idt: 4.7063291925955075e-05
+color: 0.012426044318009411
+End of epoch 110 / 120 	 
+learning rate = 0.0000328
+End of epoch 111 / 120 	 
+learning rate = 0.0000295
+End of epoch 112 / 120 	 
+learning rate = 0.0000262
+End of epoch 113 / 120 	 
+learning rate = 0.0000230
+End of epoch 114 / 120 	 
+learning rate = 0.0000197
+End of epoch 115 / 120 	 
+learning rate = 0.0000164
+End of epoch 116 / 120 	 
+learning rate = 0.0000131
+End of epoch 117 / 120 	 
+learning rate = 0.0000098
+End of epoch 118 / 120 	 
+learning rate = 0.0000066
+End of epoch 119 / 120 	 
+learning rate = 0.0000033
+saving the model at the end of epoch 120, iters 1946880
+D: 0.002755452822746904
+G: 0.034825916639005645
+idt: 5.544734501919199e-05
+color: 0.012882722960509492
+End of epoch 120 / 120 	 
+learning rate = 0.0000000
+Training losses saved to training_losses.xlsx
