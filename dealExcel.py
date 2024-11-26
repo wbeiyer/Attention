@@ -48,7 +48,7 @@ plt.xticks(range(0, max_epoch + 1, 10))
 plt.legend()
 
 # 保存图形
-plt.savefig('loss_plot.png')
+plt.savefig('loss_plot_wave.png')
 
 # 显示图形
 plt.show()
