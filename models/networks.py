@@ -4,17 +4,15 @@ from torch.nn import init
 import functools
 from torch.optim import lr_scheduler
 import torch.nn.functional as F
-
+import numpy as np
 
 ###############################################################################
 # Helper Functions
 ###############################################################################
 
-
 class Identity(nn.Module):
     def forward(self, x):
         return x
-
 
 def get_norm_layer(norm_type='instance'):
     """Return a normalization layer
@@ -34,7 +32,6 @@ def get_norm_layer(norm_type='instance'):
     else:
         raise NotImplementedError('normalization layer [%s] is not found' % norm_type)
     return norm_layer
-
 
 def get_scheduler(optimizer, opt):
     """Return a learning rate scheduler
@@ -63,7 +60,6 @@ def get_scheduler(optimizer, opt):
     else:
         return NotImplementedError('learning rate policy [%s] is not implemented', opt.lr_policy)
     return scheduler
-
 
 def init_weights(net, init_type='normal', init_gain=0.02):
     """Initialize network weights.
@@ -98,7 +94,6 @@ def init_weights(net, init_type='normal', init_gain=0.02):
     print('initialize network with %s' % init_type)
     net.apply(init_func)  # apply the initialization function <init_func>
 
-
 def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Initialize a network: 1. register CPU/GPU device (with multi-GPU support); 2. initialize the network weights
     Parameters:
@@ -116,7 +111,6 @@ def init_net(net, init_type='normal', init_gain=0.02, gpu_ids=[]):
         net = torch.nn.DataParallel(net, gpu_ids)  # multi-GPUs
     init_weights(net, init_type, init_gain=init_gain)
     return net
-
 
 def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a generator
@@ -158,10 +152,11 @@ def define_G(input_nc, output_nc, ngf, netG, norm='batch', use_dropout=False, in
         net = UnetGenerator(input_nc, output_nc, 8, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
     elif netG == 'our':
         net = ResnetGenerator_our(input_nc, output_nc, ngf, n_blocks=9)
+    elif netG == 'wave':
+        net = WaveletGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout,n_blocks=9)    
     else:
         raise NotImplementedError('Generator model name [%s] is not recognized' % netG)
     return init_net(net, init_type, init_gain, gpu_ids)
-
 
 def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal', init_gain=0.02, gpu_ids=[]):
     """Create a discriminator
@@ -205,7 +200,6 @@ def define_D(input_nc, ndf, netD, n_layers_D=3, norm='batch', init_type='normal'
     else:
         raise NotImplementedError('Discriminator model name [%s] is not recognized' % netD)
     return init_net(net, init_type, init_gain, gpu_ids)
-
 
 ##############################################################################
 # Classes
@@ -278,7 +272,6 @@ class GANLoss(nn.Module):
                 loss = prediction.mean()
         return loss
 
-
 def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', constant=1.0, lambda_gp=10.0):
     """Calculate the gradient penalty loss, used in WGAN-GP paper https://arxiv.org/abs/1704.00028
 
@@ -314,7 +307,6 @@ def cal_gradient_penalty(netD, real_data, fake_data, device, type='mixed', const
         return gradient_penalty, gradients
     else:
         return 0.0, None
-
 
 class ResnetGenerator(nn.Module):
     """Resnet-based generator that consists of Resnet blocks between a few downsampling/upsampling operations.
@@ -397,25 +389,6 @@ class ResnetGenerator_our(nn.Module):
             self.resnet_blocks[i].weight_init(0, 0.02)
 
         self.resnet_blocks = nn.Sequential(*self.resnet_blocks)
-
-        # self.resnet_blocks1 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks1.weight_init(0, 0.02)
-        # self.resnet_blocks2 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks2.weight_init(0, 0.02)
-        # self.resnet_blocks3 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks3.weight_init(0, 0.02)
-        # self.resnet_blocks4 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks4.weight_init(0, 0.02)
-        # self.resnet_blocks5 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks5.weight_init(0, 0.02)
-        # self.resnet_blocks6 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks6.weight_init(0, 0.02)
-        # self.resnet_blocks7 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks7.weight_init(0, 0.02)
-        # self.resnet_blocks8 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks8.weight_init(0, 0.02)
-        # self.resnet_blocks9 = resnet_block(256, 3, 1, 1)
-        # self.resnet_blocks9.weight_init(0, 0.02)
 
         self.deconv1_content = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
         self.deconv1_norm_content = nn.InstanceNorm2d(ngf * 2)
@@ -607,7 +580,6 @@ class ResnetBlock(nn.Module):
         out = x + self.conv_block(x)  # add skip connections
         return out
 
-
 class UnetGenerator(nn.Module):
     """Create a Unet-based generator"""
 
@@ -638,7 +610,6 @@ class UnetGenerator(nn.Module):
     def forward(self, input):
         """Standard forward"""
         return self.model(input)
-
 
 class UnetSkipConnectionBlock(nn.Module):
     """Defines the Unet submodule with skip connection.
@@ -709,7 +680,6 @@ class UnetSkipConnectionBlock(nn.Module):
         else:   # add skip connections
             return torch.cat([x, self.model(x)], 1)
 
-
 class NLayerDiscriminator(nn.Module):
     """Defines a PatchGAN discriminator"""
 
@@ -757,7 +727,6 @@ class NLayerDiscriminator(nn.Module):
         """Standard forward."""
         return self.model(input)
 
-
 class PixelDiscriminator(nn.Module):
     """Defines a 1x1 PatchGAN discriminator (pixelGAN)"""
 
@@ -788,3 +757,155 @@ class PixelDiscriminator(nn.Module):
     def forward(self, input):
         """Standard forward."""
         return self.net(input)
+
+def get_wav_two(in_channels, pool=True):
+    """wavelet decomposition using conv2d"""
+    harr_wav_L = 1 / np.sqrt(2) * np.ones((1, 2))
+    harr_wav_H = 1 / np.sqrt(2) * np.ones((1, 2))
+    harr_wav_H[0, 0] = -1 * harr_wav_H[0, 0]
+
+    harr_wav_LL = np.transpose(harr_wav_L) * harr_wav_L
+    harr_wav_LH = np.transpose(harr_wav_L) * harr_wav_H
+    harr_wav_HL = np.transpose(harr_wav_H) * harr_wav_L
+    harr_wav_HH = np.transpose(harr_wav_H) * harr_wav_H
+
+    filter_LL = torch.from_numpy(harr_wav_LL).unsqueeze(0)
+   #  print(filter_LL.size())
+    filter_LH = torch.from_numpy(harr_wav_LH).unsqueeze(0)
+    filter_HL = torch.from_numpy(harr_wav_HL).unsqueeze(0)
+    filter_HH = torch.from_numpy(harr_wav_HH).unsqueeze(0)
+
+    if pool:
+        net = nn.Conv2d
+    else:
+        net = nn.ConvTranspose2d
+    LL = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    LH = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    HL = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+    HH = net(in_channels, in_channels,
+             kernel_size=2, stride=2, padding=0, bias=False,
+             groups=in_channels)
+
+    LL.weight.requires_grad = False
+    LH.weight.requires_grad = False
+    HL.weight.requires_grad = False
+    HH.weight.requires_grad = False
+
+    LL.weight.data = filter_LL.float().unsqueeze(0).expand(in_channels, -1, -1, -1)
+    LH.weight.data = filter_LH.float().unsqueeze(0).expand(in_channels, -1, -1, -1)
+    HL.weight.data = filter_HL.float().unsqueeze(0).expand(in_channels, -1, -1, -1)
+    HH.weight.data = filter_HH.float().unsqueeze(0).expand(in_channels, -1, -1, -1)
+
+    return LL, LH, HL, HH
+# 输入通道等于输出通道
+class WavePool2(nn.Module):
+    def __init__(self, in_channels):
+        super(WavePool2, self).__init__()
+        self.LL, self.LH, self.HL, self.HH = get_wav_two(in_channels)
+
+    def forward(self, x):
+        return self.LL(x), self.LH(x), self.HL(x), self.HH(x)
+
+class WaveUnpool(nn.Module):
+    def __init__(self, in_channels, option_unpool='cat5'):
+        super(WaveUnpool, self).__init__()
+        self.in_channels = in_channels
+        self.option_unpool = option_unpool
+        self.LL, self.LH, self.HL, self.HH = get_wav_two(self.in_channels, pool=False)
+
+    def forward(self, LL, LH, HL, HH, original=None):
+        if self.option_unpool == 'sum':
+            return self.LL(LL) + self.LH(LH) + self.HL(HL) + self.HH(HH)
+        elif self.option_unpool == 'cat5' and original is not None:
+            return torch.cat([self.LL(LL), self.LH(LH), self.HL(HL), self.HH(HH), original], dim=1)
+        elif self.option_unpool =='sumall':
+            return LL + LH + HL + HH
+        else:
+            raise NotImplementedError
+
+class WaveletGenerator(nn.Module):
+    # net = WaveletGenerator(input_nc, output_nc, ngf, norm_layer=norm_layer, use_dropout=use_dropout)
+    def __init__(self, input_nc, output_nc, ngf=64, norm_layer=nn.BatchNorm2d, use_dropout=False, n_blocks=6, padding_type='reflect'):
+        super(WaveletGenerator, self).__init__()
+        # self.shared_encoder = SharedEncoder(input_nc * 4, ngf, n_blocks)  # 输入通道数为4（LL, LH, HL, HH）
+        # TODO 
+        self.conv1 = nn.Conv2d(input_nc, ngf, 7, 1, 0)
+        # self.conv1 = nn.Conv2d(input_nc * 4, ngf, 7, 1, 0)
+        self.conv1_norm = nn.InstanceNorm2d(ngf)
+        self.conv2 = nn.Conv2d(ngf, ngf * 2, 3, 2, 1)
+        self.conv2_norm = nn.InstanceNorm2d(ngf * 2)
+        self.conv3 = nn.Conv2d(ngf * 2, ngf * 4, 3, 2, 1)
+        self.conv3_norm = nn.InstanceNorm2d(ngf * 4)
+
+        self.resnet_blocks = []
+        for i in range(n_blocks):
+            self.resnet_blocks.append(resnet_block(ngf * 4, 3, 1, 1))
+            self.resnet_blocks[i].weight_init(0, 0.02)
+
+        self.resnet_blocks = nn.Sequential(*self.resnet_blocks)
+
+        # self.low_freq_decoder = LowFrequencyDecoder(ngf)
+        self.deconv1_low = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
+        self.deconv1_norm_low = nn.InstanceNorm2d(ngf * 2)
+        self.deconv2_low = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
+        self.deconv2_norm_low = nn.InstanceNorm2d(ngf)
+        self.deconv3_low = nn.Conv2d(ngf, input_nc, 7, 1, 0)
+        self.tanh = nn.Tanh()
+
+        # self.high_freq_decoder = HighFrequencyDecoder(ngf)
+        # self.deconv1_high = nn.ConvTranspose2d(ngf * 4, ngf * 2, 3, 2, 1, 1)
+        # self.deconv1_norm_high = nn.InstanceNorm2d(ngf * 2)
+        # self.deconv2_high = nn.ConvTranspose2d(ngf * 2, ngf, 3, 2, 1, 1)
+        # self.deconv2_norm_high = nn.InstanceNorm2d(ngf)
+        # self.deconv3_high = nn.Conv2d(ngf, input_nc*3, 7, 1, 0)
+
+    def wavelet_decomposition(self, x):
+        pool = WavePool2(in_channels=3).to(x.device)
+        # LL, LH, HL, HH = pool(x)
+        return pool(x)
+
+    def inverse_wavelet_transform(self, LL, LH, HL, HH):
+        unpool=WaveUnpool(in_channels=3,option_unpool='sum').to(LL.device)
+        return unpool(LL, LH, HL, HH)
+    def forward(self, x):
+        # 反射填充 256*256*3 --> 262*262*3
+        # LL, LH, HL, HH = self.wavelet_decomposition(x)
+        # combined = torch.cat([LL, LH, HL, HH], dim=1)
+        # TODO 
+        combined=x
+        x1 = F.pad(combined, (3, 3, 3, 3), 'reflect')
+        x2 = F.relu(self.conv1_norm(self.conv1(x1)))
+        x3 = F.relu(self.conv2_norm(self.conv2(x2)))
+        x4 = F.relu(self.conv3_norm(self.conv3(x3)))
+        latent_representation = self.resnet_blocks(x4)
+
+        # low_freq_image = self.low_freq_decoder(latent_representation)
+        x_low_freq1 = F.relu(self.deconv1_norm_low(self.deconv1_low(latent_representation)))
+        x_low_freq2 = F.relu(self.deconv2_norm_low(self.deconv2_low(x_low_freq1)))
+        x_low_freq3 = F.pad(x_low_freq2, (3, 3, 3, 3), 'reflect')
+        low_freq = self.deconv3_low(x_low_freq3)
+        low_freq_image = self.tanh(low_freq)
+        
+        # # high_freq_image = self.high_freq_decoder(latent_representation)
+        # x_high_freq = F.relu(self.deconv1_norm_high(self.deconv1_high(latent_representation)))
+        # x_high_freq = F.relu(self.deconv2_norm_high(self.deconv2_high(x_high_freq)))
+        # x_high_freq = F.pad(x_high_freq, (3, 3, 3, 3), 'reflect')
+        # high_freq = self.deconv3_high(x_high_freq)
+        # high_freq_image = self.tanh(high_freq)
+        
+        # 使用生成的高频图像进行逆小波变换
+        # final_image = self.inverse_wavelet_transform(low_freq_image, high_freq_image[:, 0:3], high_freq_image[:, 3:6], high_freq_image[:, 6:9])
+        
+        # return final_image,low_freq_image,high_freq_image
+        return low_freq_image
+        # TODO
+        # downsampled_image = torch.nn.functional.interpolate(final_image, scale_factor=0.5, mode='bilinear', align_corners=False)
+        # downsampled_high_freq_image = torch.nn.functional.interpolate(high_freq_image, scale_factor=0.5, mode='bilinear', align_corners=False)
+        # downsampled_low_freq_image= torch.nn.functional.interpolate(low_freq_image, scale_factor=0.5, mode='bilinear', align_corners=False)
+        # return downsampled_image,downsampled_low_freq_image,downsampled_high_freq_image
